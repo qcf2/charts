@@ -1,7 +1,9 @@
-const Gdax = require('gdax')
-const fs = require('fs')
-const path = require('path')
-const timers = require('timers')
+const Gdax = require('gdax');
+const fs = require('fs');
+const path = require('path');
+const timers = require('timers');
+const express = require('express');
+const app = express();
 const pubcl = new Gdax.PublicClient();
 const prod = 'BTC-USD';
 const state = {
@@ -32,44 +34,17 @@ try {
 	pubcl.getProduct24HrStats().then(d => { setState("product24HrStats", d) })
 	pubcl.getCurrencies().then(d => { setState("currencies", d) })
 	pubcl.getTime().then(d => { setState("remotetime", d) })
-} catch (e) { console.log(e)}
+} catch (e) { console.log(e) }
 
-setInterval(updateTicker, 250);
+setInterval(updateTicker, 1000);
 
 function updateTicker() {
-	pubcl.getProductTicker().then(d => setState("productTicker", d))
+	pubcl.getProductTicker(state.product).then(d => setState("productTicker", d))
 }
 
-const http = require('http');
-http.createServer(function(req, res) {
-	if (req.url === "/gdax") {
-		res.writeHead(200, {'Content-Type':'application/json'});
-		res.end(JSON.stringify(state));
-	} else {
-		let filepath = '.'+req.url;
-		if (filepath === './') filepath = './index.html';
-		console.log("serving: " + filepath);
-		let ext = path.extname(filepath);
-		let contentType = 'text/html';
-		switch(ext) {
-			case '.js': contentType = 'text/javascript'; break;
-			case '.js.map': contentType = 'text/javascript'; break;
-			case '.css': contentType = 'text/css'; break;
-			case '.json': contentType = 'application/json'; break;
-			case '.png': contentType = 'image/png'; break;
-			case '.jpg': contentType = 'image/jpg'; break;
-			case '.wav': contentType = 'audio/wav'; break;
-		}
-		fs.readFile(filepath, function(err, data) {
-			if (err) {
-				console.log("error", err);
-				res.writeHead(500);
-				res.end();
-			} else {
-				res.writeHead(200, {'Content-Type':contentType});
-				res.write(data);
-				res.end();
-			}
-		});
-	}
-}).listen(8888, 'localhost')
+app.use(express.static('charts'));
+app.get('/gdax', (req, res) => {
+	res.writeHead(200, {'Content-Type':'application/json'});
+	res.end(JSON.stringify(state));
+});
+app.listen(8888, () => ('app listening on 8888'));
