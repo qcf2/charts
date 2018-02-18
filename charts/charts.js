@@ -33,13 +33,26 @@ class store
 	}
 }
 window.store = new store();
+window.chartloaded = false;
 function updateChart(selector, tickerdata) {
-	var chart = bb.generate({
-		data: {
-			columns: [tickerdata]
-		},
-		bindto: selector
-	})
+	if (!window.chartloaded) {
+		console.log(tickerdata);
+		window.chartloaded = bb.generate({
+			data: {
+				x: "x",
+				columns: tickerdata,
+				type: "step",
+			},
+			axis: {
+				x:{type: "timeseries", format: "%s"}
+			},
+			bindto: selector
+		})
+	} else {
+		window.chartloaded.load({
+			columns: tickerdata
+		})
+	}
 }
 window.updateChart = updateChart;
 function getGdax() {
@@ -55,28 +68,33 @@ function getGdax() {
 		
 }
 window.getGdax = getGdax;
-let tickerdata = ['$'];
+let tickerdata = ['p'];
+let timedata = ["x"];
 window.store.addCb(function(state, store){
 	document.title = state.gdax.product + ": " + state.gdax.productTicker.price;
 	let hist = state.gdax.productHistoricRates;
 	let tick = state.gdax.productTicker;
 	//console.log("Checking data for chart: ", hist, tick);
 	if (hist && tick) {
-		/*
 		if (tickerdata.length === 1) {
 			let ln = hist.length;
+			console.log("Doing hist: ", hist, ln);
 			while (ln--) {
+				timedata.push(hist[ln][0])
 				tickerdata.push(hist[ln][4])
 			}
 		}
-		*/
-		let n = 100;
+		let n = 500;
 		if (tickerdata.length > n) {
-			tickerdata = tickerdata.slice(n, ticker.length)
-			tickerdata.unshift("$")
+			tickerdata = tickerdata.slice(tickerdata.length - n - 1, tickerdata.length)
+			tickerdata.unshift("p")
+			timedata = timedata.slice(timedata.length - n - 1, timedata.length)
+			timedata.unshift("x")
 		}
+		//"2018-02-18T03:31:40.132000Z"
+		timedata.push(new Date().getTime(tick.time) / 1000);
 		tickerdata.push(tick.price);
-		updateChart("#chart", tickerdata);
+		updateChart("#chart", [timedata, tickerdata]);
 	}
 })
 
