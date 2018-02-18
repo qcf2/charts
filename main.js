@@ -24,27 +24,34 @@ function setState(key, val) {
 	state[key] = val;
 	state.ts[key] = new Date().getTime();
 }
-try {
-	pubcl.getProducts().then(d => { setState("products", d) })
-	pubcl.getProductOrderBook().then(d => { setState("productOrderBook", d) })
-	pubcl.getProductTicker().then(d => { setState("productTicker", d) })
-	pubcl.getProductTrades().then(d => { setState("productTrades", d) })
-//	pubcl.getProductTradeStream().then(d => { setState("productTradeStream", d) })
-	pubcl.getProductHistoricRates().then(d => { setState("productHistoricRates", d) })
-	pubcl.getProduct24HrStats().then(d => { setState("product24HrStats", d) })
-	pubcl.getCurrencies().then(d => { setState("currencies", d) })
-	pubcl.getTime().then(d => { setState("remotetime", d) })
-} catch (e) { console.log(e) }
 
 setInterval(updateTicker, 1000);
 
 function updateTicker() {
 	pubcl.getProductTicker(state.product).then(d => setState("productTicker", d))
 }
+function updateFullState() {
+	try {
+		pubcl.getProducts().then(d => { setState("products", d) })
+		pubcl.getProductOrderBook(state.product).then(d => { setState("productOrderBook", d) })
+		pubcl.getProductTicker(state.product).then(d => { setState("productTicker", d) })
+		pubcl.getProductTrades(state.product).then(d => { setState("productTrades", d) })
+	//	pubcl.getProductTradeStream(state.product).then(d => { setState("productTradeStream", d) })
+		pubcl.getProductHistoricRates(state.product).then(d => { setState("productHistoricRates", d) })
+		pubcl.getProduct24HrStats(state.product).then(d => { setState("product24HrStats", d) })
+		pubcl.getCurrencies().then(d => { setState("currencies", d) })
+		pubcl.getTime().then(d => { setState("remotetime", d) })
+	} catch (e) { console.log(e) }
+}
+updateFullState();
 
 app.use(express.static('charts'));
 app.get('/gdax', (req, res) => {
 	res.writeHead(200, {'Content-Type':'application/json'});
 	res.end(JSON.stringify(state));
+});
+app.get('/refresh', (req, res) => {
+	res.writeHead(200, {'Content-Type':'application/json'});
+	res.end(JSON.stringify({productTicker: state.productTicker}));
 });
 app.listen(8888, () => ('app listening on 8888'));
