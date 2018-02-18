@@ -17,7 +17,17 @@ module.exports = {
 			},
 			exclude: [ 'node_modules' ]	
 		},{
-			test: '/\.json$/', loader:'json-loader'
+			test: /\.json$/,
+			loader:'json-loader'
+		},{
+			test: /\.css$/,
+			loader: 'style-loader'
+		},{
+			test: /\.css$/,
+			loader: 'css-loader'
+		},{
+			test: /\.(jpe?g|png|gif|svg)$/i,
+			loader: 'file-loader'
 		}]
 	},
 	stats: {
